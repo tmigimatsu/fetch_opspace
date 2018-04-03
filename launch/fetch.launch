@@ -36,7 +36,7 @@
   </node>
 
   <!-- Controllers -->
-  <rosparam file="$(find fetch_bringup)/config/torque_controllers.yaml" command="load" />
+  <rosparam file="/home/fetch/Documents/toki_ws/src/fetch_opspace/config/torque_controllers.yaml" command="load" />
 
   <!-- Joint State -> TF -->
   <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher" />

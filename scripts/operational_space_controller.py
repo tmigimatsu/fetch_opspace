@@ -82,6 +82,8 @@ class JointSpaceController:
         rospy.init_node("joint_space_controller")
 
     def read_joint_sensors(self, joint_states):
+        if len(joint_states.position) != 13: # Ignore gripper messages
+            return
         with self.lock:
             np.copyto(self.thread_q, joint_states.position[IDX_JOINT_1:IDX_JOINT_1+self.dof])
             np.copyto(self.thread_dq, joint_states.velocity[IDX_JOINT_1:IDX_JOINT_1+self.dof])
