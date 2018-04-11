@@ -60,6 +60,7 @@ class JointSpaceController:
         self.J = np.zeros((6, self.dof))
 
         self.q_init = np.array([0., -np.pi/4., 0., np.pi/4, 0., np.pi/2, 0.,]) # Face down
+        self.q_init = np.array([0., 0., 0., 0., 0., 0., 0.,]) # Face down
         self.q_tuck = np.array([1.32, 1.40, -0.2, 1.72, 0.0, 1.66, 0.0]) # Storage position
         self.q_stow = np.array([1.32, 0.7, 0.0, -2.0, 0.0, -0.57, 0.0])
         self.q_intermediate_stow = np.array([0.7, -0.3, 0.0, -0.3, 0.0, -0.57, 0.0])
@@ -174,7 +175,8 @@ class JointSpaceController:
         ddq, q_err = self.pd_control(self.q, self.dq, q_des, kp, kv, dq_max)
 
         if N is None:
-            tau = self.A.dot(ddq)
+            #tau = self.A.dot(ddq)
+            tau = ddq
         else:
             Lambda = pseudoinverse(N.dot(self.A_inv.dot(N.T)))
             tau = N.T.dot(Lambda.dot(ddq))
@@ -239,23 +241,32 @@ class JointSpaceController:
 
             if self.state == "INITIALIZE":
                 # Initialize joint space
-                tau_des, _, x_err = self.position_control(self.x_init, kp=10)
+                #tau_des, _, x_err = self.position_control(self.x_init, kp=10, kv=0)
 
                 # Check for convergence
-                if np.linalg.norm(x_err) < 0.1 and np.linalg.norm(self.dq) < 0.1:
-                    self.state = "JOINT_SPACE_INIT"
-                    print("Switching to state: " + self.state)
-                    self.t_start = t_curr
+                #if np.linalg.norm(x_err) < 0.1 and np.linalg.norm(self.dq) < 0.1:
+                #    self.state = "JOINT_SPACE_INIT"
+                #    print("Switching to state: " + self.state)
+                #    self.t_start = t_curr
 
-            elif self.state == "JOINT_SPACE_INIT":
+            	#elif self.state == "JOINT_SPACE_INIT":
                 # Initialize joint space
-                tau_des, q_err = self.joint_space_control(self.q_init, dq_max=np.pi)
+                #tau_des, q_err = self.joint_space_control(self.q_init, dq_max=np.pi)
+	        kp = np.array([10, 10, 0, 10, 30, 30, 10])
+		kv = np.array([10, 10, 10, -8, -20, -4, 10])
+	        kp = np.array([0, 0, 0, 0, 0, 0, 0])
+		kp = np.array([10, 15, 9, 7, 3.2, 3, 3])
+		kv = np.array([-10, -15, -9, -7, -3.2, -3, -3])
+                tau_des, q_err = self.joint_space_control(self.q_init, kp=kp, kv=kv)
+                kp = 0.1 *np.ones((7,))
+                tau_des = -kp * (self.q - self.q_init)
+                #tau_des = np.linalg.pinv(self.J[:3]) * (
 
                 # Check for convergence
-                if np.linalg.norm(q_err) < 0.1:
-                    self.state = "OPERATIONAL_SPACE"
-                    print("Switching to state: " + self.state)
-                    self.t_start = t_curr
+                #if np.linalg.norm(q_err) < 0.1:
+                #    self.state = "OPERATIONAL_SPACE"
+                #    print("Switching to state: " + self.state)
+                #    self.t_start = t_curr
 
             elif self.state == "OPERATIONAL_SPACE":
                 # Perform circular trajectory
@@ -288,9 +299,11 @@ class JointSpaceController:
                 self.pub.publish(ros_command)
 
             # Track frequency
-            # if idx_iter % 100 == 0:
-            #     print(t_curr - t_interval)
-            #     t_interval = t_curr
+            if idx_iter % 100 == 0:
+		print(t_curr - t_interval, "tau_des", "q_err")
+		print(tau_des)
+		print(q_err)
+                t_interval = t_curr
             idx_iter += 1
             r.sleep()
 

@@ -25,10 +25,10 @@ arm_controller:
 #    root: "torso_lift_link"
 #    tip: "gripper_link"
 #    autostart: false # Handled by torque controller
-#  cartesian_twist:
-#    type: "robot_controllers/CartesianTwistController"
-#    root_name: torso_lift_link 
-#    tip_name: wrist_roll_link
+  cartesian_twist:
+    type: "robot_controllers/CartesianTwistController"
+    root_name: torso_lift_link 
+    tip_name: gripper_link
 
 arm_with_torso_controller:
   follow_joint_trajectory:
@@ -76,6 +76,7 @@ robot_driver:
     #- "arm_controller/follow_joint_trajectory"
     #- "arm_controller/gravity_compensation"
     - "arm_controller/joint_torque"
+    - "arm_controller/cartesian_twist"
     #- "arm_with_torso_controller/follow_joint_trajectory"
     #- "base_controller"
     #- "head_controller/follow_joint_trajectory"

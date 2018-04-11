@@ -11,6 +11,7 @@ from sensor_msgs.msg import JointState
 import threading
 import time
 import json
+import rospy
 
 # Redis key to monitor
 # REDIS_KEY = "sai2::optoforceSensor::6Dsensor::force"
@@ -24,6 +25,9 @@ LABELS = ['q0', 'q1', 'q2', 'q3', 'q4', 'q5', 'q6',
 COLORS = ['tab:blue', 'tab:orange', 'tab:green', 'tab:red', 'tab:purple', 'tab:brown', 'tab:pink',
           'tab:blue', 'tab:orange', 'tab:green', 'tab:red', 'tab:purple', 'tab:brown', 'tab:pink',
           'tab:blue', 'tab:orange', 'tab:green', 'tab:red', 'tab:purple', 'tab:brown', 'tab:pink']
+COLORS = ['b', 'g', 'r', 'c', 'm', 'y', 'k',
+          'b', 'g', 'r', 'c', 'm', 'y', 'k',
+          'b', 'g', 'r', 'c', 'm', 'y', 'k']
 
 # Split data into subplots at these start indices
 SUBPLOT_START = [0, 7, 14]
@@ -32,7 +36,7 @@ SUBPLOT_START = [0, 7, 14]
 TIME_WINDOW = 10
 
 # Y axis limits
-Y_LIM = [[-1, 1], [-1, 1], [-1, 1]]
+Y_LIM = [[-3, 3], [-0.5, 0.5], [-5, 5]]
 
 IDX_JOINT_1 = 6
 BASE_LINK = "torso_lift_link"
@@ -54,17 +58,20 @@ class RealtimePlotter:
         self.run_loop = True
 
         self.ros_lock = threading.Lock()
-        self.thread_q = np.zeros((self.dof,))
-        self.thread_dq = np.zeros((self.dof,))
-        self.thread_tau = np.zeros((self.dof,))
+        self.thread_q = np.zeros((7,))
+        self.thread_dq = np.zeros((7,))
+        self.thread_tau = np.zeros((7,))
 
         sub = rospy.Subscriber("joint_states", JointState, lambda joint_states: self.read_joint_sensors(joint_states))
+        rospy.init_node("realtime_plotter")
 
     def read_joint_sensors(self, joint_states):
+        if len(joint_states.position) != 13: # Ignore gripper messages
+            return
         with self.ros_lock:
-            np.copyto(self.thread_q, joint_states.position[IDX_JOINT_1:IDX_JOINT_1+self.dof])
-            np.copyto(self.thread_dq, joint_states.velocity[IDX_JOINT_1:IDX_JOINT_1+self.dof])
-            np.copyto(self.thread_tau, joint_states.effort[IDX_JOINT_1:IDX_JOINT_1+self.dof])
+            np.copyto(self.thread_q, joint_states.position[IDX_JOINT_1:IDX_JOINT_1+7])
+            np.copyto(self.thread_dq, joint_states.velocity[IDX_JOINT_1:IDX_JOINT_1+7])
+            np.copyto(self.thread_tau, joint_states.effort[IDX_JOINT_1:IDX_JOINT_1+7])
 
     def redis_thread(self, logfile="output.log", host="localhost", port=6379):
         # Open log file
@@ -148,12 +155,12 @@ class RealtimePlotter:
             idx_old_start = np.searchsorted(self.time[old_channel][:idx_old_end], t_curr, side="right")
 
             for i, line in enumerate(lines):
-                if i < 6:
+                if i < 21:
                     # Plot the current channel up to the current timestamp
                     line.set_data(self.time[self.channel][:idx_curr], self.data[self.channel][i,:idx_curr])
                 else:
                     # Plot the old channel from the current timestamp
-                    line.set_data(self.time[old_channel][idx_old_start:idx_old_end], self.data[old_channel][i-6,idx_old_start:idx_old_end])
+                    line.set_data(self.time[old_channel][idx_old_start:idx_old_end], self.data[old_channel][i-21,idx_old_start:idx_old_end])
 
             self.channel_lock.release()
             return lines
