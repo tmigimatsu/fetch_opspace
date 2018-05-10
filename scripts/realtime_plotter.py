@@ -36,7 +36,7 @@ SUBPLOT_START = [0, 7, 14]
 TIME_WINDOW = 10
 
 # Y axis limits
-Y_LIM = [[-3, 3], [-0.5, 0.5], [-5, 5]]
+Y_LIM = [[-3, 3], [-0.5, 0.5], [-10, 10]]
 
 IDX_JOINT_1 = 6
 BASE_LINK = "torso_lift_link"

@@ -140,8 +140,6 @@ class JointSpaceController:
             dx_des = -kp / kv * x_err
             norm_dx_des = np.linalg.norm(dx_des)
             nu = min(1, dx_max / norm_dx_des) if norm_dx_des > 0 else 0
-            if nu < 1:
-                print(nu)
             dx_err = dx - nu * dx_des
             ddx = -kv * dx_err
 
@@ -175,8 +173,7 @@ class JointSpaceController:
         ddq, q_err = self.pd_control(self.q, self.dq, q_des, kp, kv, dq_max)
 
         if N is None:
-            #tau = self.A.dot(ddq)
-            tau = ddq
+            tau = self.A.dot(ddq)
         else:
             Lambda = pseudoinverse(N.dot(self.A_inv.dot(N.T)))
             tau = N.T.dot(Lambda.dot(ddq))
@@ -251,15 +248,16 @@ class JointSpaceController:
 
             	#elif self.state == "JOINT_SPACE_INIT":
                 # Initialize joint space
-                #tau_des, q_err = self.joint_space_control(self.q_init, dq_max=np.pi)
-	        kp = np.array([10, 10, 0, 10, 30, 30, 10])
-		kv = np.array([10, 10, 10, -8, -20, -4, 10])
-	        kp = np.array([0, 0, 0, 0, 0, 0, 0])
-		kp = np.array([10, 15, 9, 7, 3.2, 3, 3])
-		kv = np.array([-10, -15, -9, -7, -3.2, -3, -3])
-                tau_des, q_err = self.joint_space_control(self.q_init, kp=kp, kv=kv)
-                kp = 0.1 *np.ones((7,))
-                tau_des = -kp * (self.q - self.q_init)
+                tau_des, q_err = self.joint_space_control(self.q_init, dq_max=np.pi)
+	        #kp = np.array([10, 10, 0, 10, 30, 30, 10])
+		#kv = np.array([10, 10, 10, -8, -20, -4, 10])
+	        #kp = np.array([0, 0, 0, 0, 0, 0, 0])
+		#kp = np.array([10, 15, 9, 7, 3.2, 3, 3])
+		#kv = np.array([-10, -15, -9, -7, -3.2, -3, -3])
+                #tau_des, q_err = self.joint_space_control(self.q_init, kp=kp, kv=kv)
+                #kp = np.zeros((7,))
+                #kp[5] = 10
+                #tau_des = kp * np.sin(2*np.pi/4*time.time())
                 #tau_des = np.linalg.pinv(self.J[:3]) * (
 
                 # Check for convergence
@@ -300,9 +298,9 @@ class JointSpaceController:
 
             # Track frequency
             if idx_iter % 100 == 0:
-		print(t_curr - t_interval, "tau_des", "q_err")
-		print(tau_des)
-		print(q_err)
+		#print(t_curr - t_interval, "tau_des", "q_err")
+		#print(tau_des)
+		#print(q_err)
                 t_interval = t_curr
             idx_iter += 1
             r.sleep()
